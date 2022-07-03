@@ -1,13 +1,16 @@
-const { registration, login, logout, current, update } = require("../service/auth");
+const { verify } = require("jsonwebtoken");
+const { registration, login, logout, current, update, find } = require("../service/auth");
+const { sendEmail } = require("../service/email");
 const { uploadImage } = require("../service/image");
 
 const { schemaRegister } = require("../service/schemas/users");
 
 const registerUser = async (req, res, next) => {
-  const { email, password } = req.body;
+  const { email, password, verificationToken } = req.body;
   try {
-    const result = await registration(email, password);
+    const result = await registration(email, password, verificationToken);
     if (result && schemaRegister.validate(email, password)) {
+      sendEmail(email, result.verificationToken);
       return res.json({
         status: "created",
         code: 201,
@@ -86,4 +89,52 @@ const avatarsUser = async (req, res, next) => {
   }
 };
 
-module.exports = { registerUser, loginUser, logoutUser, currentUser, avatarsUser };
+const resendUser = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const result = await find(email);
+    console.log("result",result)
+    if (!result) {
+      return res.json({
+        status: "error",
+        code: 404,
+        message: `User was not found`,
+      });
+    }
+    await sendEmail(email, result.verificationToken);
+    return res.json({
+      status: "success",
+      code: 200,
+      message: "check your email",
+    });
+  } catch (e) {
+    next(e);
+  }
+};
+
+const confirmUser = async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+    const result = await find(verificationToken);
+    if (!result) {
+      return res.json({
+        status: "error",
+        code: 404,
+        message: `User not found`,
+      });
+    }
+    // console.log(result._id)
+    await update(result._id, { verify: true, verificationToken: null });
+
+    return res.json({
+      status: "created",
+      code: 200,
+      message: `Verification successful`,
+      data: result,
+    });
+  } catch (e) {
+    next(e);
+  }
+};
+
+module.exports = { registerUser, loginUser, logoutUser, currentUser, avatarsUser, resendUser, confirmUser };
