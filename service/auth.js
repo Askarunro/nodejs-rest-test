@@ -57,13 +57,11 @@ const current = async (contactId) => {
 };
 
 const update = async (id, data) => {
-  // console.log(id)
-  // console.log(data)
   return Users.findByIdAndUpdate(id, data, { new: true });
 };
 
 const find = async (filters) => {
- return Users.findOne({filters});
+ return Users.findOne(filters);
 };
 
 module.exports = {
