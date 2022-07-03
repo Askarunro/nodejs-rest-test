@@ -92,8 +92,7 @@ const avatarsUser = async (req, res, next) => {
 const resendUser = async (req, res, next) => {
   try {
     const { email } = req.body;
-    const result = await find(email);
-    console.log("result",result)
+    const result = await find({email});
     if (!result) {
       return res.json({
         status: "error",
@@ -115,7 +114,7 @@ const resendUser = async (req, res, next) => {
 const confirmUser = async (req, res, next) => {
   try {
     const { verificationToken } = req.params;
-    const result = await find(verificationToken);
+    const result = await find({verificationToken});
     if (!result) {
       return res.json({
         status: "error",
@@ -123,7 +122,6 @@ const confirmUser = async (req, res, next) => {
         message: `User not found`,
       });
     }
-    // console.log(result._id)
     await update(result._id, { verify: true, verificationToken: null });
 
     return res.json({
