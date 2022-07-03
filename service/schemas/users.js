@@ -1,42 +1,53 @@
-const {Schema, model} = require('mongoose');
+const { Schema, model } = require("mongoose");
 const Joi = require("joi");
-const gravatar = require('gravatar');
+const gravatar = require("gravatar");
+const {v4} = require("uuid");
 
 const schemaRegister = Joi.object({
-    password: Joi.string().min(3).max(30).required(),
-    email: Joi.string().email().required(),
-    subscription: Joi.string().min(3).max(8),
-  });
+  password: Joi.string().min(3).max(30).required(),
+  email: Joi.string().email().required(),
+  subscription: Joi.string().min(3).max(8),
+});
 
-  const schemaLogin = Joi.object({
-    password: Joi.string().min(3).max(30).required(),
-    email: Joi.string().email().required(),
-  });
+const schemaLogin = Joi.object({
+  password: Joi.string().min(3).max(30).required(),
+  email: Joi.string().email().required(),
+});
 
 const users = new Schema({
-    password: {
-      type: String,
-      required: [true, 'Set password for user'],
+  password: {
+    type: String,
+    required: [true, "Set password for user"],
+  },
+  email: {
+    type: String,
+    required: [true, "Email is required"],
+    unique: true,
+  },
+  subscription: {
+    type: String,
+    enum: ["starter", "pro", "business"],
+    default: "starter",
+  },
+  avatarURL: {
+    type: String,
+    default: function () {
+      return gravatar.url(this.email, {}, true);
     },
-    email: {
-      type: String,
-      required: [true, 'Email is required'],
-      unique: true,
+  },
+  verify: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+    default: function () {
+      return v4();
     },
-    subscription: {
-      type: String,
-      enum: ["starter", "pro", "business"],
-      default: "starter"
-    },
-    avatarURL: {
-      type: String,
-      default: function(){
-        return gravatar.url(this.email,{}, true)
-      }
-    },
-    token: String
-  })
+  },
+  token: String,
+});
 
-  const Users = model("users", users);
+const Users = model("users", users);
 
-module.exports = {Users, schemaRegister, schemaLogin};
+module.exports = { Users, schemaRegister, schemaLogin };
